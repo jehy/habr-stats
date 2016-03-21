@@ -77,10 +77,25 @@ class HabrPost
 
     function get_rate()
     {
-        preg_match('/title=\"Общий рейтинг (.*?):/si', $this->text, $match);
-        if ($match[1] !== FALSE)
-            return $match[1];
-        else {
+
+        preg_match('/<span class=\"voting-wjt__counter-score js-score\" title=\"(.*?)\">(.*?)<\/span>/si', $this->text, $match);
+        if ($match[2] !== FALSE) {
+            $rate = $match[2];
+            if ($rate[0] === '0')
+                return '0';
+            else {
+                $sign = $rate[0];
+                $num = '';
+                for ($i = 1; $i < strlen($rate); $i++) {
+                    if (is_numeric($rate[$i]))
+                        $num .= $rate[$i];
+                }
+                $rate = $num;
+                if ($sign !== '+')
+                    $rate = -(int)$rate;
+                return $rate;
+            }
+        } else {
             echo 'WTF?! Failed to get rate! ' . $this->link_file() . '!<br>';
             return false;
         }
