@@ -54,7 +54,6 @@ class HabrPost
                 $time = $dt[2];
             } else {
                 echo 'WTF?! Failed to get date! ' . $this->link_file() . '!<br>';
-                print_R($dt);
                 return false;
             }
         }
@@ -122,24 +121,30 @@ class HabrPost
 
 $mysqli = new mysqli('localhost', 'habr', 'habr', 'habr');
 $post = new HabrPost();
-for ($i = 1; $i < 4000; $i++) {
-    $file = 'topics/index.html.' . $i;
+$errors = 0;
+$success = 0;
+for ($i = 0; $errors < 10; $i++) {
+    if ($i == 0)
+        $file = 'topics/index.html';
+    else
+        $file = 'topics/index.html.' . $i;
     $text = file_get_contents($file);
     if ($text) {
         $post->filename = $file;
         $post->text = $text;
         $info = $post->get_info();
         //print_R($info);
-        if ($info['date'] === FALSE || $info['id'] === FALSE)
+        if ($info['date'] === FALSE || $info['id'] === FALSE || $info['views'] === FALSE)
             continue;
 
-
+        $success++;
         $sql = 'INSERT INTO posts(id,created,rate,comments,views) VALUES(?,?,?,?,?)';
         $stmt = $mysqli->prepare($sql);
         $stmt->bind_param('isiii', $info['id'], $info['date'],
             $info['rate'], $info['comments'], $info['views']);
         $res = $stmt->execute();
 
-    }
+    } else $errors++;
 }
+echo '<p>Processed ' . ($i - $errors) . ' files, ' . $success . ' successfully</p>';
 ?>
